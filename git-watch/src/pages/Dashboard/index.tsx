@@ -1,47 +1,68 @@
-import React from 'react';
+import React, { useState, FormEvent } from 'react';
 import logoImg from '../../assets/logo.svg';
+import api from '../../services/api';
+
 import { FiChevronRight } from 'react-icons/fi';
 import { Title, Form, Repositories } from './styles';
 
+interface Repository {
+    full_name: string;
+    owner: {
+        login: string;
+        avatar_url: string;
+    };
+    description: string;
+}
+
 const Dashboard: React.FC = () => {
+
+    //To deal with the state of the data
+    //useState: Create a state with the first value
+    //repositories: The State value
+    //setRepositories: Function to change the state
+
+    const [newRepository, setNewRepository] = useState('');
+    const [repositories, setRepositories] = useState<Repository[]>([]);
+
+    //function to add a new repository
+    async function handleAddRepository(event: FormEvent<HTMLFormElement>): Promise<void> {
+        event.preventDefault(); //Prevent the form default behavior
+
+        const response = await api.get<Repository>(`repos/${newRepository}`);
+
+        const repository = response.data;
+
+        setRepositories([...repositories, repository]);
+
+        //To clear the input
+        setNewRepository('');
+    }
+
     return(
         <>
             <img src={logoImg} alt="GitWatch"/>
             <Title>Explore repositories on Github</Title>
 
-            <Form>
-                <input placeholder="type repository's name"/>
+            <Form onSubmit={handleAddRepository}>
+                <input
+                    value={newRepository}
+                    onChange={(e) => setNewRepository(e.target.value)} placeholder="type repository's name"/>
                 <button>Search</button>
             </Form>
 
             <Repositories>
-                <a href="test">
-                    <img src="https://avatars3.githubusercontent.com/u/11893246?s=460&u=885f65e47c64046d27c22eec9f9b66f65f277477&v=4" alt="Tiago Vaccari"/>
-                    <div>
-                        <strong>tvaccari34/git-watch</strong>
-                        <p>A good way to find repositories</p>
-                    </div>
 
-                    <FiChevronRight size={20} />
-                </a>
-                <a href="test">
-                    <img src="https://avatars3.githubusercontent.com/u/11893246?s=460&u=885f65e47c64046d27c22eec9f9b66f65f277477&v=4" alt="Tiago Vaccari"/>
-                    <div>
-                        <strong>tvaccari34/git-watch</strong>
-                        <p>A good way to find repositories</p>
-                    </div>
+                {repositories.map(repository => (
+                    <a key={repository.full_name} href="test">
+                        <img src={repository.owner.avatar_url} alt={repository.owner.login}/>
+                        <div>
+                            <strong>{repository.full_name}</strong>
+                            <p>{repository.description}</p>
+                        </div>
 
-                    <FiChevronRight size={20} />
-                </a>
-                <a href="test">
-                    <img src="https://avatars3.githubusercontent.com/u/11893246?s=460&u=885f65e47c64046d27c22eec9f9b66f65f277477&v=4" alt="Tiago Vaccari"/>
-                    <div>
-                        <strong>tvaccari34/git-watch</strong>
-                        <p>A good way to find repositories</p>
-                    </div>
-
-                    <FiChevronRight size={20} />
-                </a>
+                        <FiChevronRight size={20} />
+                    </a>
+                ))}
             </Repositories>
         </>
     )
