@@ -3,7 +3,7 @@ import logoImg from '../../assets/logo.svg';
 import api from '../../services/api';
 
 import { FiChevronRight } from 'react-icons/fi';
-import { Title, Form, Repositories } from './styles';
+import { Title, Form, Repositories, Error } from './styles';
 
 interface Repository {
     full_name: string;
@@ -22,20 +22,32 @@ const Dashboard: React.FC = () => {
     //setRepositories: Function to change the state
 
     const [newRepository, setNewRepository] = useState('');
+    const [inputError, setInputError] = useState('');
     const [repositories, setRepositories] = useState<Repository[]>([]);
 
     //function to add a new repository
     async function handleAddRepository(event: FormEvent<HTMLFormElement>): Promise<void> {
         event.preventDefault(); //Prevent the form default behavior
 
-        const response = await api.get<Repository>(`repos/${newRepository}`);
+        if (!newRepository) {
+            setInputError('Author/Repository is missing.');
+            return;
+        }
 
-        const repository = response.data;
+        try {
+            const response = await api.get<Repository>(`repos/${newRepository}`);
 
-        setRepositories([...repositories, repository]);
+            const repository = response.data;
 
-        //To clear the input
-        setNewRepository('');
+            setRepositories([...repositories, repository]);
+
+            //To clear the input
+            setNewRepository('');
+            setInputError('');
+
+        } catch (error) {
+            setInputError('Error when trying to find that repository. Please use "Author/Repository" format.');
+        }
     }
 
     return(
@@ -43,12 +55,14 @@ const Dashboard: React.FC = () => {
             <img src={logoImg} alt="GitWatch"/>
             <Title>Explore repositories on Github</Title>
 
-            <Form onSubmit={handleAddRepository}>
+            <Form hasError={!!inputError} onSubmit={handleAddRepository}>
                 <input
                     value={newRepository}
                     onChange={(e) => setNewRepository(e.target.value)} placeholder="type repository's name"/>
                 <button>Search</button>
             </Form>
+
+            {inputError && <Error>{inputError}</Error>}
 
             <Repositories>
 
