@@ -1,4 +1,4 @@
-import React, { useState, FormEvent } from 'react';
+import React, { useState, useEffect, FormEvent } from 'react';
 import logoImg from '../../assets/logo.svg';
 import api from '../../services/api';
 
@@ -23,7 +23,19 @@ const Dashboard: React.FC = () => {
 
     const [newRepository, setNewRepository] = useState('');
     const [inputError, setInputError] = useState('');
-    const [repositories, setRepositories] = useState<Repository[]>([]);
+    const [repositories, setRepositories] = useState<Repository[]>(() => {
+        const storageRepositories = localStorage.getItem('@GibhubWatch:repositories');
+
+        if (storageRepositories) {
+            return JSON.parse(storageRepositories);
+        }
+        else return [];
+    });
+
+    //call a function when parameter has been changed
+    useEffect(() => {
+        localStorage.setItem('@GibhubWatch:repositories', JSON.stringify(repositories));
+    }, [repositories]);
 
     //function to add a new repository
     async function handleAddRepository(event: FormEvent<HTMLFormElement>): Promise<void> {
